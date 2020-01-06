@@ -1,6 +1,7 @@
 var stationBoardTable;
 
-function load(stationName){
+function load(){
+    var stationName = getStation();
     var url = "https://transport.opendata.ch/v1/stationboard?station="+stationName+"&limit=20";
     var request = new XMLHttpRequest();
     request.addEventListener('load', function() {
@@ -16,19 +17,42 @@ function load(stationName){
     request.send();
 }
 
+function startTimers() {
+    setInterval(renderTime, 500);
+    setInterval(load, 10000);
+}
+
 function renderStaionboard(responseData) {
-    var stationName = responseData.station.name;
-    console.log("renderStaionboard" + stationName);
-    var stationBoard = responseData.stationboard;
-    renderStationboardTable(stationBoard);
+    renderStationBoardTitle(responseData.station.name);
+    renderStationboardTable(responseData.stationboard);
+    renderUpdateTime();
+}
+
+function renderStationBoardTitle(stationName){
+    document.getElementById("stationName").innerText = "Abfahrt " + stationName;
+}
+
+function renderTime(){
+    var time = getLongTimeString(new Date());
+    document.getElementById("time").innerText = ""+time;
+}
+
+function renderUpdateTime(){
+    var time = getShortTimeString(new Date());
+    document.getElementById("updateTime").innerText = "aktualisiert um "+time;
 }
 
 function renderStationboardTable(stationBoard){
-    stationBoardTable = document.createElement("tbody"); 
+    stationBoardTable = document.getElementById("stationboardBody");
+    while (stationBoardTable.firstChild) {
+        stationBoardTable.removeChild(stationBoardTable.firstChild);
+      }
     stationBoard.forEach(renderJourney);
+    /*
     var stationboardBody = document.getElementById("stationboardBody");
     var stationboard = document.getElementById("stationboard");
     stationboard.replaceChild(stationBoardTable,stationboardBody);
+    */
 }
 
 function renderJourney(journey) {
@@ -58,13 +82,13 @@ function renderJourney(journey) {
 function getConnectionName (connection) {
     var number = parseInt(connection.number);
     number = isNaN(number) ? "" : number;
-    const className = "connectionLogo " + connection.category;
+    var className = "connectionLogo " + connection.category;
     return "<div class='"+className+"'>"+connection.category + number + "</div>";
 }
 
 function getStation() {
-    const url = new URL(window.location.href);
-    const station = url.searchParams.get("station");
+    var url = new URL(window.location.href);
+    var station = url.searchParams.get("station");
     return station ? station : "Thalwil";
   }
 
@@ -77,4 +101,5 @@ function getLongTimeString (date) {
     return date.toLocaleTimeString('de');
   }
 
-load("Thalwil");
+load();
+startTimers();
