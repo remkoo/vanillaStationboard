@@ -94,7 +94,12 @@ function getStation() {
 
   //utils
 function getShortTimeString (date){
-    return date.toLocaleTimeString('de',{ timeStyle: 'short', hour12: false });
+    var hour = date.getHours();
+    hour = ("0" + hour).slice(-2);
+    var min = date.getMinutes();
+    min = ("0" + hour).slice(-2);
+    return hour + ":" + min;
+    //return date.toLocaleTimeString('de',{ timeStyle: 'short', hour12: false });
   }
 
 function getLongTimeString (date) {

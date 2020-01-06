@@ -43,7 +43,9 @@ td, th {
 }
 
 .boardTitle {
+    white-space: nowrap;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-around;
     margin: 0.5em
   }
