@@ -87,9 +87,10 @@ function getConnectionName (connection) {
 }
 
 function getStation() {
-    var url = new URL(window.location.href);
-    var station = url.searchParams.get("station");
-    return station ? station : "Thalwil";
+    //var url = new URL(window.location.href);
+    //var station = url.searchParams.get("station");
+    //return station ? station : "Thalwil";
+    return "Thalwil";
   }
 
   //utils
