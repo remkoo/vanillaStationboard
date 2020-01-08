@@ -2,13 +2,13 @@ var stationBoardTable;
 
 function load(){
     var stationName = getStation();
-    var url = "https://transport.opendata.ch/v1/stationboard?station="+stationName+"&limit=20";
+    var url = "https://timetable.search.ch/api/stationboard.json?stop="+stationName+"&show_delays=1&show_tracks=1&show_trackchanges=1&limit=50";
     var request = new XMLHttpRequest();
     request.addEventListener('load', function() {
         if (request.status >= 200 && request.status < 300) {
             var responseData = JSON.parse(request.responseText);
             renderStaionboard(responseData);
-          console.log(responseData);
+            console.log(responseData);
         } else {
             console.warn(request.statusText, request.responseText);
         }
@@ -19,12 +19,12 @@ function load(){
 
 function startTimers() {
     setInterval(renderTime, 500);
-    setInterval(load, 10000);
+    setInterval(load, 60000);
 }
 
 function renderStaionboard(responseData) {
-    renderStationBoardTitle(responseData.station.name);
-    renderStationboardTable(responseData.stationboard);
+    renderStationBoardTitle(responseData.stop.name);
+    renderStationboardTable(responseData.connections);
     renderUpdateTime();
 }
 
@@ -33,12 +33,12 @@ function renderStationBoardTitle(stationName){
 }
 
 function renderTime(){
-    var time = getLongTimeString(new Date());
+    var time = getLongTimeString(moment());
     document.getElementById("time").innerText = ""+time;
 }
 
 function renderUpdateTime(){
-    var time = getShortTimeString(new Date());
+    var time = getShortTimeString(moment());
     document.getElementById("updateTime").innerText = "aktualisiert um "+time;
 }
 
@@ -48,64 +48,69 @@ function renderStationboardTable(stationBoard){
         stationBoardTable.removeChild(stationBoardTable.firstChild);
       }
     stationBoard.forEach(renderJourney);
-    /*
-    var stationboardBody = document.getElementById("stationboardBody");
-    var stationboard = document.getElementById("stationboard");
-    stationboard.replaceChild(stationBoardTable,stationboardBody);
-    */
 }
 
 function renderJourney(journey) {
     var journeyRow = document.createElement("tr"); 
 
     var departureTime = document.createElement("td");
-    var time = getShortTimeString(new Date(journey.stop.departureTimestamp * 1000));
+    //var time = getShortTimeString(new Date(journey.time));
+    //2020-01-09 00:08:00
+    var time = getShortTimeString(moment(journey.time, "YYYY-MM-DD hh:mm:ss"));
     var connection = getConnectionName(journey);
     departureTime.innerHTML = time + " " + connection;
     journeyRow.appendChild(departureTime);
 
     var destination = document.createElement("td");
-    destination.innerText = journey.to;
+    destination.innerText = journey.terminal.name;
     journeyRow.appendChild(destination);
 
     var platform = document.createElement("td");
-    platform.innerText = journey.stop.platform;
+    platform.innerHTML = getTrack(journey.track);
     journeyRow.appendChild(platform);
 
     var delay = document.createElement("td");
-    delay.innerText = journey.stop.delay;
+    delay.classList.add("information");
+    delay.innerText = getDelay(journey.dep_delay);
     journeyRow.appendChild(delay);
 
     stationBoardTable.appendChild(journeyRow);
 }
 
+function getTrack(track) {
+    if(track.slice(-1) === '!') return "<span class='trackChange'>"+track.slice(0,-1)+"</span>";
+    else return track;
+}
+
+function getDelay(delay) {
+    if(Number(delay)) return delay;
+    return '';
+}
+
 function getConnectionName (connection) {
-    var number = parseInt(connection.number);
+    var number = parseInt(connection["*L"]);
     number = isNaN(number) ? "" : number;
-    var className = "connectionLogo " + connection.category;
-    return "<div class='"+className+"'>"+connection.category + number + "</div>";
+    var className = "connectionLogo " + connection["*G"];
+    return "<div class='"+className+"'>"+connection["*G"] + number + "</div>";
 }
 
 function getStation() {
-    //var url = new URL(window.location.href);
-    //var station = url.searchParams.get("station");
-    //return station ? station : "Thalwil";
+    try {
+        var url = new URL(window.location.href);
+        var station = url.searchParams.get("station");
+        return station ? station : "Thalwil";
+    } catch (e) {
+        console.log(e);
+    }
     return "Thalwil";
   }
 
   //utils
 function getShortTimeString (date){
-    var hour = date.getHours();
-    hour = ("0" + hour).slice(-2);
-    var min = date.getMinutes();
-    min = ("0" + min).slice(-2);
-    return hour + ":" + min;
-    //return date.toLocaleTimeString('de',{ timeStyle: 'short', hour12: false });
+    return moment(date).format("HH:mm");
+
   }
 
 function getLongTimeString (date) {
-    return date.toLocaleTimeString('de');
+    return moment(date).format("HH:mm:ss");
   }
-
-load();
-startTimers();

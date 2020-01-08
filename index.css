@@ -38,6 +38,10 @@ td, th {
     background-color: #eb0000;
 }
 
+.trackChange{
+    color:  #eb0000;
+}
+
 .information {
     color: #F1DD38;
 }
